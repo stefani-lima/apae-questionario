@@ -1,0 +1,26 @@
+# Blueprint do Render (render.com). O banco fica no Neon (neon.com), que não expira no plano gratuito.
+# No painel do Render: New > Blueprint > escolha este repositório e preencha os valores marcados com sync: false.
+services:
+  - type: web
+    name: apae-avaliacao
+    runtime: docker
+    plan: free
+    region: virginia        # mesma região do banco no Neon (AWS us-east-1)
+    healthCheckPath: /saude.php
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_NOME
+        value: APAE de Rio do Sul
+      - key: TRUST_PROXY
+        value: "1"
+      - key: DATABASE_URL      # cole a connection string do Neon (com ?sslmode=require)
+        sync: false
+      - key: APP_URL           # ex.: https://apae-avaliacao.onrender.com
+        sync: false
+      - key: ADMIN_EMAIL       # primeiro administrador (criado só se não houver usuários)
+        sync: false
+      - key: ADMIN_SENHA
+        sync: false
+      - key: ADMIN_NOME
+        value: Administrador
