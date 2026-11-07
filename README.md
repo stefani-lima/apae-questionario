@@ -1,156 +1,59 @@
-# Questionário de Avaliação · APAE de Rio do Sul
+# Questionário de Avaliação da APAE de Rio do Sul
 
-Sistema web para a **APAE de Rio do Sul (SC)** coletar, de forma anônima, a avaliação de familiares, responsáveis e visitantes sobre o atendimento.
-Na recepção fica um **cartaz com QR Code**: a pessoa aponta o celular, responde tocando em carinhas, e a equipe acompanha os resultados num painel protegido por senha.
+Sistema web para a APAE de Rio do Sul receber avaliações sobre o atendimento. Familiares, responsáveis e visitantes leem um QR Code na recepção, respondem pelo celular sem se identificar, e a equipe da instituição acompanha os resultados em uma área restrita.
 
-Projeto de Extensão · Sistemas de Informação · Unidavi · Programação Web I
-
-**Documento de requisitos:** [`docs/requisitos.md`](docs/requisitos.md)
+Projeto de Extensão da disciplina de Programação Web I, curso de Sistemas de Informação da Unidavi.
 
 <p>
-  <img src="docs/img/questionario-celular.png" alt="Questionário no celular" width="240">
-  <img src="docs/img/painel.png" alt="Painel de resultados" width="560">
+  <img src="docs/img/questionario-celular.png" alt="Questionário aberto no celular" width="240">
+  <img src="docs/img/painel.png" alt="Painel de resultados da equipe" width="560">
 </p>
 
 ## Funcionalidades
 
-| Para quem | O que faz |
-|---|---|
-| Público (sem login) | Questionário anônimo com carinhas de 1 a 5 e comentário; modo totem para tablet na recepção |
-| Equipe (com login) | Painel com média, % de notas positivas e distribuição por pergunta, com filtro por período |
-| | Lista e detalhe das avaliações, exclusão de testes e exportação para Excel (CSV) |
-| | Cadastro, edição, ordenação e ativação de perguntas |
-| | Cartaz A4 com QR Code para imprimir |
-| | Cadastro de usuários e troca de senha |
+- Questionário anônimo com notas de 1 a 5 (carinhas) e campo para comentários
+- Login da equipe da APAE
+- Cadastro, edição, ordenação e desativação de perguntas
+- Painel com a média geral, a distribuição das notas e os comentários, com filtro por período
+- Exportação das respostas para planilha
+- Cartaz com QR Code pronto para imprimir
+- Cadastro de usuários da equipe
+
+Os requisitos completos estão em [docs/requisitos.md](docs/requisitos.md).
 
 ## Tecnologias
 
-- PHP 8.1+ sem framework, com PDO
-- PostgreSQL 13+
-- HTML, CSS e JavaScript puros
-- [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) (licença MIT) em `public/assets/vendor/`
-- Docker para publicação
+PHP 8 com PDO, PostgreSQL, HTML, CSS e JavaScript, organizados no padrão MVC.
 
-## Segurança e privacidade
+## Como executar
 
-- Consultas parametrizadas (SQL Injection) e saída escapada com `htmlspecialchars` (XSS)
-- Token CSRF em todos os formulários que alteram dados
-- Senhas com `password_hash`; sessão com `HttpOnly`, `SameSite` e regeneração de ID no login
-- Bloqueio de login após 5 tentativas erradas em 15 minutos
-- Questionário anônimo: não grava nome, contato nem IP (LGPD)
+1. Instale o PostgreSQL e o PHP 8.1 ou mais recente (o PHP do XAMPP serve).
+2. No `php.ini`, habilite as extensões `pdo_pgsql` e `pgsql`.
+3. Execute o `iniciar.bat`. Na primeira vez ele abre o arquivo `.env`: informe a senha do PostgreSQL em `DB_PASSWORD`, salve e execute o `iniciar.bat` novamente.
+4. Acesse `http://localhost:8080` para o questionário e `http://localhost:8080/admin` para a área da equipe.
 
-## Como rodar no Windows (XAMPP)
+O banco de dados, as tabelas, as perguntas iniciais e o primeiro usuário são criados automaticamente.
 
-1. Instale o **PostgreSQL** (<https://www.postgresql.org/download/windows/>) e anote a senha do usuário `postgres`.
-2. No `C:\xampp\php\php.ini`, apague o `;` do começo das linhas `extension=pdo_pgsql` e `extension=pgsql`.
-3. Dê dois cliques em **`iniciar.bat`**. Na primeira vez ele abre o arquivo `.env`: coloque a senha do PostgreSQL em `DB_PASSWORD=`, salve e rode o `iniciar.bat` de novo.
-4. Questionário: <http://localhost:8080> · Área da equipe: <http://localhost:8080/admin/> (login definido em `ADMIN_EMAIL` e `ADMIN_SENHA` no `.env`).
-
-O banco, as tabelas, as perguntas padrão e o primeiro administrador são criados automaticamente pelo `scripts/migrate.php`.
-
-Pelo Apache do XAMPP, coloque o projeto em `C:\xampp\htdocs\apae` e acesse `http://localhost/apae/public/` (o `.htaccess` cuida das URLs).
-
-### Linux / macOS
-
-```bash
-cp .env.example .env        # ajuste os dados do banco e do administrador
-php scripts/migrate.php
-php -S localhost:8080 -t public public/index.php
-```
-
-## Publicação (Render + Neon)
-
-1. **Neon** (<https://neon.com>): crie um projeto na região *AWS US East 1* e copie a connection string **sem** connection pooling.
-2. **Render** (<https://render.com>): *New → Blueprint*, escolha este repositório. O `render.yaml` já define Docker, plano gratuito e região. Preencha:
-   - `DATABASE_URL`: a connection string do Neon
-   - `ADMIN_EMAIL` e `ADMIN_SENHA`: o primeiro administrador
-   - `APP_URL`: o endereço gerado pelo Render (ex.: `https://apae-avaliacao.onrender.com`), usado no QR Code
-3. Depois do deploy, entre em `/admin/`, troque a senha em **Minha conta** e imprima o cartaz em **QR Code**.
-
-> No plano gratuito, o Render suspende o site após 15 minutos sem acesso, e o primeiro acesso seguinte leva cerca de 1 minuto.
-> Um monitor gratuito (ex.: UptimeRobot) acessando `/saude` a cada 10 minutos mantém o site ativo.
-
-### Variáveis de ambiente
-
-| Variável | Para que serve |
-|---|---|
-| `DATABASE_URL` | Conexão completa com o PostgreSQL (tem prioridade sobre `DB_*`) |
-| `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` | Conexão em partes (uso local) |
-| `APP_URL` | Endereço público usado no QR Code |
-| `APP_NOME` | Nome exibido (padrão: APAE de Rio do Sul) |
-| `APP_ENV` | `production` esconde detalhes técnicos dos erros |
-| `ADMIN_NOME`, `ADMIN_EMAIL`, `ADMIN_SENHA` | Primeiro administrador (criado só se não houver usuários) |
-| `TRUST_PROXY` | `1` atrás de proxy (Render), para o limite de login usar o IP real |
-
-## Logotipo
-
-Coloque o logo oficial (com autorização da APAE) em `public/assets/img/logo.png`. Ele aparece automaticamente no topo do questionário.
-
-## Arquitetura (MVC)
-
-Toda requisição passa pelo **front controller** `public/index.php`, que usa o **roteador** para chamar o método do controller certo.
-O **controller** valida a entrada, usa os **models** para ler e gravar no banco e entrega os dados para a **view**, que monta o HTML.
+## Estrutura
 
 ```text
 app/
-  Controllers/    recebem a requisição e decidem o que fazer
-    QuestionarioController   questionário público e agradecimento
-    AuthController           entrar e sair
-    PainelController         painel de resultados
-    AvaliacaoController      lista, detalhe, exclusão e exportação CSV
-    PerguntaController       cadastro, edição, ordem, ativação e exclusão
-    QrCodeController         cartaz com QR Code
-    UsuarioController        administradores
-    ContaController          troca de senha
-    SaudeController          verificação de saúde (/saude)
-  Models/         acesso ao banco e regras de negócio
-    Pergunta, Avaliacao, Usuario
-  Views/          HTML (templates)
-    layouts/                 estrutura das páginas pública e administrativa
-    questionario/            formulário e agradecimento
-    admin/                   telas da área da equipe
-  Core/           infraestrutura
-    Router, Controller (base), View, Database (PDO), Auth, helpers
-  bootstrap.php   carrega configuração, autoload e sessão
-config/
-  config.php      leitura do .env e variáveis de ambiente
-  rotas.php       mapa de URLs para controllers
-public/           única pasta acessível pela web
-  index.php       front controller
-  .htaccess       URLs amigáveis no Apache (XAMPP)
-  assets/         CSS, JavaScript, imagens e biblioteca de QR Code
-database/         criação das tabelas e perguntas padrão
-scripts/          instalação do banco (migrate.php)
-docker/           inicialização do contêiner e detecção do PHP no Windows
-docs/             documento de requisitos e imagens
+  Controllers/   recebem as requisições
+  Models/        acesso ao banco de dados
+  Views/         páginas HTML
+  Core/          roteador, conexão e autenticação
+config/          configurações e rotas
+public/          arquivos acessíveis pelo navegador
+database/        script de criação do banco
+docs/            documento de requisitos
 ```
-
-### Rotas
-
-| Método | URL | Controller | Ação |
-|---|---|---|---|
-| GET / POST | `/` | Questionario | exibir / enviar |
-| GET | `/obrigado` | Questionario | obrigado |
-| GET | `/saude` | Saude | verificar |
-| GET / POST | `/admin/login` | Auth | formulario / entrar |
-| POST | `/admin/sair` | Auth | sair |
-| GET | `/admin` | Painel | index |
-| GET | `/admin/avaliacoes` | Avaliacao | index |
-| GET | `/admin/avaliacoes/exportar` | Avaliacao | exportar |
-| GET | `/admin/avaliacoes/{id}` | Avaliacao | mostrar |
-| POST | `/admin/avaliacoes/{id}/excluir` | Avaliacao | excluir |
-| GET | `/admin/perguntas` | Pergunta | index |
-| GET / POST | `/admin/perguntas/nova`, `/admin/perguntas` | Pergunta | criar / salvar |
-| GET / POST | `/admin/perguntas/{id}/editar`, `/admin/perguntas/{id}` | Pergunta | editar / atualizar |
-| POST | `/admin/perguntas/{id}/mover`, `/alternar`, `/excluir` | Pergunta | mover / alternar / excluir |
-| GET | `/admin/qrcode` | QrCode | index |
-| GET / POST | `/admin/usuarios` | Usuario | index / salvar |
-| POST | `/admin/usuarios/{id}/alternar` | Usuario | alternar |
-| GET / POST | `/admin/conta` | Conta | index / alterarSenha |
 
 ## Equipe
 
-- _Nome do integrante 1_
-- _Nome do integrante 2_
+- Bruna
+- Ronaldo
+- Stéfani
 
-Unidavi · 2026
+Professor: Sandro
+
+Unidavi, 2026
