@@ -23,6 +23,7 @@ $router->get('/', [QuestionarioController::class, 'exibir']);
 $router->post('/', [QuestionarioController::class, 'enviar']);
 $router->get('/obrigado', [QuestionarioController::class, 'obrigado']);
 $router->get('/saude', [SaudeController::class, 'verificar']);
+$router->get('/ping', [SaudeController::class, 'ping']);
 
 // Autenticação
 $router->get('/admin/login', [AuthController::class, 'formulario']);

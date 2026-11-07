@@ -6,7 +6,7 @@ services:
     runtime: docker
     plan: free
     region: virginia        # mesma região do banco no Neon (AWS us-east-1)
-    healthCheckPath: /saude
+    healthCheckPath: /ping
     envVars:
       - key: APP_ENV
         value: production
