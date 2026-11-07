@@ -30,4 +30,4 @@ echo   Area da equipe ....... http://localhost:8080/admin/
 echo Para encerrar, feche esta janela.
 echo.
 start "" "http://localhost:8080"
-php -S localhost:8080 -t public
+php -S localhost:8080 -t public public\index.php

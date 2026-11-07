@@ -2,55 +2,20 @@
 declare(strict_types=1);
 
 /*
- * US1 — Questionário público (acessado pelo QR Code da recepção).
- * Padrão POST/Redirect/GET: depois de gravar, redireciona para obrigado.php.
+ * Front controller: toda requisição passa por aqui e o roteador
+ * encaminha para o controller certo (ver config/rotas.php).
  */
 
-require dirname(__DIR__) . '/src/bootstrap.php';
-
-use App\AvaliacaoRepositorio;
-use App\PerguntaRepositorio;
-
-// Origem do acesso: ?origem=qrcode (cartaz) ou ?modo=totem (tablet na recepção).
-if (($_GET['modo'] ?? '') === 'totem') {
-    $_SESSION['totem'] = true;
-}
-$origem = !empty($_SESSION['totem']) ? 'totem' : ((($_GET['origem'] ?? $_POST['origem'] ?? '') === 'qrcode') ? 'qrcode' : 'link');
-
-$perguntas = (new PerguntaRepositorio())->listarAtivas();
-$erros = [];
-$valores = [];
-
-if (metodo_post()) {
-    csrf_validar();
-
-    // Campo invisível preenchido = robô. Finge que deu certo e descarta.
-    if (!empty($_POST['site'])) {
-        redirecionar('obrigado.php');
-    }
-
-    [$respostas, $erros, $valores] = AvaliacaoRepositorio::validarRespostas($perguntas, $_POST['resp'] ?? []);
-
-    if (!$erros) {
-        // Token de uso único: um segundo clique em "Enviar" não grava de novo.
-        $token = (string) ($_POST['envio_token'] ?? '');
-        $tokensValidos = $_SESSION['envio_tokens'] ?? [];
-        if ($token !== '' && isset($tokensValidos[$token])) {
-            unset($_SESSION['envio_tokens'][$token]);
-            (new AvaliacaoRepositorio())->registrar($respostas, $origem);
-        }
-        redirecionar('obrigado.php');
+// No servidor embutido do PHP (php -S), arquivos que existem (CSS, JS, imagens) são entregues direto.
+if (PHP_SAPI === 'cli-server') {
+    $arquivo = __DIR__ . parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+    if (is_file($arquivo) && $arquivo !== __FILE__) {
+        return false;
     }
 }
 
-// Gera um novo token de envio (mantém só os 5 mais recentes para abas abertas).
-$tokenEnvio = bin2hex(random_bytes(16));
-$_SESSION['envio_tokens'] = array_slice(($_SESSION['envio_tokens'] ?? []) + [$tokenEnvio => time()], -5, null, true);
+require dirname(__DIR__) . '/app/bootstrap.php';
 
-render('publico/questionario', [
-    'perguntas' => $perguntas,
-    'erros' => $erros,
-    'valores' => $valores,
-    'tokenEnvio' => $tokenEnvio,
-    'origem' => $origem === 'totem' ? 'link' : $origem,
-], 'publico');
+$router = new App\Core\Router();
+require BASE_PATH . '/config/rotas.php';
+$router->despachar($_SERVER['REQUEST_METHOD'] ?? 'GET', $_SERVER['REQUEST_URI'] ?? '/');

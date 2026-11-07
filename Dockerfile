@@ -10,7 +10,9 @@ RUN apt-get update \
 # Somente a pasta public/ fica exposta na web
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
 RUN sed -ri 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf /etc/apache2/apache2.conf \
- && a2enmod headers \
+ && a2enmod headers rewrite \
+ && printf '<Directory %s>\n    AllowOverride All\n</Directory>\n' "$APACHE_DOCUMENT_ROOT" > /etc/apache2/conf-available/apae.conf \
+ && a2enconf apae \
  && { echo 'ServerTokens Prod'; echo 'ServerSignature Off'; } >> /etc/apache2/conf-available/security.conf \
  && mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" \
  && { echo 'expose_php = Off'; echo 'session.cookie_httponly = 1'; } > "$PHP_INI_DIR/conf.d/apae.ini"

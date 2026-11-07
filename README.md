@@ -48,12 +48,14 @@ Projeto de Extensão · Sistemas de Informação · Unidavi · Programação Web
 
 O banco, as tabelas, as perguntas padrão e o primeiro administrador são criados automaticamente pelo `scripts/migrate.php`.
 
+Pelo Apache do XAMPP, coloque o projeto em `C:\xampp\htdocs\apae` e acesse `http://localhost/apae/public/` (o `.htaccess` cuida das URLs).
+
 ### Linux / macOS
 
 ```bash
 cp .env.example .env        # ajuste os dados do banco e do administrador
 php scripts/migrate.php
-php -S localhost:8080 -t public
+php -S localhost:8080 -t public public/index.php
 ```
 
 ## Publicação (Render + Neon)
@@ -66,7 +68,7 @@ php -S localhost:8080 -t public
 3. Depois do deploy, entre em `/admin/`, troque a senha em **Minha conta** e imprima o cartaz em **QR Code**.
 
 > No plano gratuito, o Render suspende o site após 15 minutos sem acesso, e o primeiro acesso seguinte leva cerca de 1 minuto.
-> Um monitor gratuito (ex.: UptimeRobot) acessando `/saude.php` a cada 10 minutos mantém o site ativo.
+> Um monitor gratuito (ex.: UptimeRobot) acessando `/saude` a cada 10 minutos mantém o site ativo.
 
 ### Variáveis de ambiente
 
@@ -84,16 +86,67 @@ php -S localhost:8080 -t public
 
 Coloque o logo oficial (com autorização da APAE) em `public/assets/img/logo.png`. Ele aparece automaticamente no topo do questionário.
 
-## Estrutura
+## Arquitetura (MVC)
+
+Toda requisição passa pelo **front controller** `public/index.php`, que usa o **roteador** para chamar o método do controller certo.
+O **controller** valida a entrada, usa os **models** para ler e gravar no banco e entrega os dados para a **view**, que monta o HTML.
 
 ```text
-public/       única pasta acessível pela web (questionário, área admin, CSS, JS)
-src/          classes PHP, autenticação, funções auxiliares e templates
-database/     criação das tabelas e perguntas padrão
-scripts/      instalação do banco (migrate.php)
-docker/       inicialização do contêiner e detecção do PHP no Windows
-docs/         documento de requisitos e imagens
+app/
+  Controllers/    recebem a requisição e decidem o que fazer
+    QuestionarioController   questionário público e agradecimento
+    AuthController           entrar e sair
+    PainelController         painel de resultados
+    AvaliacaoController      lista, detalhe, exclusão e exportação CSV
+    PerguntaController       cadastro, edição, ordem, ativação e exclusão
+    QrCodeController         cartaz com QR Code
+    UsuarioController        administradores
+    ContaController          troca de senha
+    SaudeController          verificação de saúde (/saude)
+  Models/         acesso ao banco e regras de negócio
+    Pergunta, Avaliacao, Usuario
+  Views/          HTML (templates)
+    layouts/                 estrutura das páginas pública e administrativa
+    questionario/            formulário e agradecimento
+    admin/                   telas da área da equipe
+  Core/           infraestrutura
+    Router, Controller (base), View, Database (PDO), Auth, helpers
+  bootstrap.php   carrega configuração, autoload e sessão
+config/
+  config.php      leitura do .env e variáveis de ambiente
+  rotas.php       mapa de URLs para controllers
+public/           única pasta acessível pela web
+  index.php       front controller
+  .htaccess       URLs amigáveis no Apache (XAMPP)
+  assets/         CSS, JavaScript, imagens e biblioteca de QR Code
+database/         criação das tabelas e perguntas padrão
+scripts/          instalação do banco (migrate.php)
+docker/           inicialização do contêiner e detecção do PHP no Windows
+docs/             documento de requisitos e imagens
 ```
+
+### Rotas
+
+| Método | URL | Controller | Ação |
+|---|---|---|---|
+| GET / POST | `/` | Questionario | exibir / enviar |
+| GET | `/obrigado` | Questionario | obrigado |
+| GET | `/saude` | Saude | verificar |
+| GET / POST | `/admin/login` | Auth | formulario / entrar |
+| POST | `/admin/sair` | Auth | sair |
+| GET | `/admin` | Painel | index |
+| GET | `/admin/avaliacoes` | Avaliacao | index |
+| GET | `/admin/avaliacoes/exportar` | Avaliacao | exportar |
+| GET | `/admin/avaliacoes/{id}` | Avaliacao | mostrar |
+| POST | `/admin/avaliacoes/{id}/excluir` | Avaliacao | excluir |
+| GET | `/admin/perguntas` | Pergunta | index |
+| GET / POST | `/admin/perguntas/nova`, `/admin/perguntas` | Pergunta | criar / salvar |
+| GET / POST | `/admin/perguntas/{id}/editar`, `/admin/perguntas/{id}` | Pergunta | editar / atualizar |
+| POST | `/admin/perguntas/{id}/mover`, `/alternar`, `/excluir` | Pergunta | mover / alternar / excluir |
+| GET | `/admin/qrcode` | QrCode | index |
+| GET / POST | `/admin/usuarios` | Usuario | index / salvar |
+| POST | `/admin/usuarios/{id}/alternar` | Usuario | alternar |
+| GET / POST | `/admin/conta` | Conta | index / alterarSenha |
 
 ## Equipe
 

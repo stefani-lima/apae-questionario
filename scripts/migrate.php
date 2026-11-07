@@ -11,10 +11,10 @@ declare(strict_types=1);
  *    Usa ADMIN_NOME / ADMIN_EMAIL / ADMIN_SENHA do ambiente; sem elas, pergunta no terminal.
  */
 
-require dirname(__DIR__) . '/src/bootstrap.php';
+require dirname(__DIR__) . '/app/bootstrap.php';
 
-use App\Database;
-use App\UsuarioRepositorio;
+use App\Core\Database;
+use App\Models\Usuario;
 
 $db = null;
 for ($tentativa = 1; $tentativa <= 10; $tentativa++) {
@@ -46,7 +46,7 @@ if ((int) $db->query('SELECT COUNT(*) FROM perguntas')->fetchColumn() === 0) {
     echo "Perguntas padrão inseridas.\n";
 }
 
-$usuarios = new UsuarioRepositorio($db);
+$usuarios = new Usuario($db);
 if ($usuarios->total() === 0) {
     $nome = env('ADMIN_NOME', 'Administrador');
     $email = env('ADMIN_EMAIL');
