@@ -6,8 +6,8 @@ Projeto de Extensão da disciplina de Programação Web I, curso de Sistemas de 
 
 Site publicado:
 
-Questionário: https://apae-avaliacao.onrender.com
-Área da equipe: https://apae-avaliacao.onrender.com/admin
+- Questionário: https://apae-avaliacao.onrender.com
+- Área da equipe: https://apae-avaliacao.onrender.com/admin
 
 <p>
   <img src="docs/img/questionario-celular.png" alt="Questionário aberto no celular" width="240">
