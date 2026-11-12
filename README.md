@@ -4,6 +4,11 @@ Sistema web para a APAE de Rio do Sul receber avaliações sobre o atendimento. 
 
 Projeto de Extensão da disciplina de Programação Web I, curso de Sistemas de Informação da Unidavi.
 
+Site publicado:
+
+Questionário: https://apae-avaliacao.onrender.com
+Área da equipe: https://apae-avaliacao.onrender.com/admin
+
 <p>
   <img src="docs/img/questionario-celular.png" alt="Questionário aberto no celular" width="240">
   <img src="docs/img/painel.png" alt="Painel de resultados da equipe" width="560">
